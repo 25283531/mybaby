@@ -89,12 +89,12 @@ jobs:
           
           # 找到解压后的SDK目录并进入
           SDK_DIR=$(ls -d openwrt-sdk-* | head -n 1)
-          cd "$SDK_DIR"
           
           # 复制包到SDK目录
-          cp -r ../package/luci-app-mybaby package/
+          cp -r ../package/luci-app-mybaby "$SDK_DIR/package/"
           
-          # 构建IPK
+          # 进入SDK目录并构建IPK
+          cd "$SDK_DIR"
           make package/luci-app-mybaby/compile V=s
 
       - name: Upload IPK
