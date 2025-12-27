@@ -43,8 +43,8 @@ jobs:
             sdk_url: https://downloads.openwrt.org/snapshots/targets/x86/64/
           - arch: aarch64_generic
             sdk_url: https://downloads.openwrt.org/snapshots/targets/armsr/armv8/
-          - arch: armv7
-            sdk_url: https://downloads.openwrt.org/snapshots/targets/armsr/armv7/
+          - arch: arm_cortex-a7_neon-vfpv4
+            sdk_url: https://downloads.openwrt.org/snapshots/targets/ipq40xx/generic/
 
     steps:
       - uses: actions/checkout@v4
@@ -77,14 +77,14 @@ jobs:
           
           # 根据架构下载不同的SDK文件
           if [ "${{ matrix.arch }}" = "x86_64" ]; then
-            wget "${{ matrix.sdk_url }}/openwrt-sdk-${{ matrix.arch }}_gcc-14.3.0_musl.Linux-x86_64.tar.zst"
-            tar -I zstd -xf openwrt-sdk-${{ matrix.arch }}_gcc-14.3.0_musl.Linux-x86_64.tar.zst
+            wget "${{ matrix.sdk_url }}/openwrt-sdk-x86-64_gcc-14.3.0_musl.Linux-x86_64.tar.zst"
+            tar -I zstd -xf openwrt-sdk-x86-64_gcc-14.3.0_musl.Linux-x86_64.tar.zst
           elif [ "${{ matrix.arch }}" = "aarch64_generic" ]; then
-            wget "${{ matrix.sdk_url }}/openwrt-sdk-${{ matrix.arch }}_gcc-14.3.0_musl.Linux-x86_64.tar.zst"
-            tar -I zstd -xf openwrt-sdk-${{ matrix.arch }}_gcc-14.3.0_musl.Linux-x86_64.tar.zst
-          elif [ "${{ matrix.arch }}" = "armv7" ]; then
-            wget "${{ matrix.sdk_url }}/openwrt-sdk-${{ matrix.arch }}_gcc-14.3.0_musl_eabi.Linux-x86_64.tar.zst"
-            tar -I zstd -xf openwrt-sdk-${{ matrix.arch }}_gcc-14.3.0_musl_eabi.Linux-x86_64.tar.zst
+            wget "${{ matrix.sdk_url }}/openwrt-sdk-armsr-armv8_gcc-14.3.0_musl.Linux-x86_64.tar.zst"
+            tar -I zstd -xf openwrt-sdk-armsr-armv8_gcc-14.3.0_musl.Linux-x86_64.tar.zst
+          elif [ "${{ matrix.arch }}" = "arm_cortex-a7_neon-vfpv4" ]; then
+            wget "${{ matrix.sdk_url }}/openwrt-sdk-ipq40xx-generic_gcc-14.3.0_musl_eabi.Linux-x86_64.tar.zst"
+            tar -I zstd -xf openwrt-sdk-ipq40xx-generic_gcc-14.3.0_musl_eabi.Linux-x86_64.tar.zst
           fi
           
           # 复制包到SDK目录
@@ -97,5 +97,5 @@ jobs:
       - name: Upload IPK
         uses: actions/upload-artifact@v4
         with:
-          name: luci-app-mybaby_${{ matrix.arch }}
-          path: bin/packages/*/mybaby/luci-app-mybaby*.ipk
+          name: luci-app-mybaby-${{ matrix.arch }}.ipk
+          path: sdk/openwrt-sdk-*/bin/packages/*/packages/luci-app-mybaby*.ipk
