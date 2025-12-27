@@ -43,6 +43,8 @@ jobs:
             sdk_url: https://downloads.openwrt.org/snapshots/targets/x86/64/
           - arch: aarch64_generic
             sdk_url: https://downloads.openwrt.org/snapshots/targets/armsr/armv8/
+          - arch: armv7_cortex-a9
+            sdk_url: https://downloads.openwrt.org/snapshots/targets/armsr/armv7/
 
     steps:
       - uses: actions/checkout@v4

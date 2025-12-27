@@ -1,1 +1,10 @@
-r‰ßŠ
+config global 'global'
+	option enabled '0'
+	option mode 'quota'
+
+config device 'example'
+	option name 'Example TV'
+	option mac '00:11:22:33:44:55'
+	option limit '120'
+	option schedule ''
+	option enabled '0'
