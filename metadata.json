@@ -1,5 +1,6 @@
+
 {
   "name": "熊孩子/mybaby",
-  "description": "An advanced OpenWrt/iStoreOS plugin dashboard for MAC-based device time control and platform-specific filtering, featuring AI-powered parenting insights.",
+  "description": "An advanced OpenWrt/iStoreOS plugin dashboard for MAC-based device time control and platform-specific filtering.",
   "requestFramePermissions": []
 }
