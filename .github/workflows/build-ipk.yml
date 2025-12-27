@@ -75,10 +75,17 @@ jobs:
           mkdir -p sdk
           cd sdk
           
-          # 获取SDK文件名
-          SDK_FILE=$(wget -qO- "${{ matrix.sdk_url }}?C=M;O=D" | grep -o "openwrt-sdk-${{ matrix.arch }}-[^\"]*tar.xz" | head -1)
-          wget "${{ matrix.sdk_url }}/${SDK_FILE}"
-          tar -xJf ${SDK_FILE}
+          # 根据架构下载不同的SDK文件
+          if [ "${{ matrix.arch }}" = "x86_64" ]; then
+            wget "${{ matrix.sdk_url }}/openwrt-sdk-${{ matrix.arch }}_gcc-14.3.0_musl.Linux-x86_64.tar.zst"
+            tar -I zstd -xf openwrt-sdk-${{ matrix.arch }}_gcc-14.3.0_musl.Linux-x86_64.tar.zst
+          elif [ "${{ matrix.arch }}" = "aarch64_generic" ]; then
+            wget "${{ matrix.sdk_url }}/openwrt-sdk-${{ matrix.arch }}_gcc-14.3.0_musl.Linux-x86_64.tar.zst"
+            tar -I zstd -xf openwrt-sdk-${{ matrix.arch }}_gcc-14.3.0_musl.Linux-x86_64.tar.zst
+          elif [ "${{ matrix.arch }}" = "armv7" ]; then
+            wget "${{ matrix.sdk_url }}/openwrt-sdk-${{ matrix.arch }}_gcc-14.3.0_musl_eabi.Linux-x86_64.tar.zst"
+            tar -I zstd -xf openwrt-sdk-${{ matrix.arch }}_gcc-14.3.0_musl_eabi.Linux-x86_64.tar.zst
+          fi
           
           # 复制包到SDK目录
           cp -r ../package/luci-app-mybaby openwrt-sdk-*/package/
