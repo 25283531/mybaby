@@ -51,18 +51,18 @@ jobs:
           name: frontend-dist
           path: dist/
 
-      - name: Prepare LuCI Structure
+      - name: Prepare OpenWrt Package Structure
         run: |
+          # 创建符合 Makefile 预期的 htdocs 结构
           mkdir -p htdocs/luci-static/mybaby
           cp -r dist/* htdocs/luci-static/mybaby/
-          # Ensure Makefile is in the expected place for the SDK action
-          # The SDK action expects the package directory to contain the Makefile
+          
+          # 创建临时文件夹来存放要交给 SDK 的代码
           mkdir -p luci-app-mybaby
           cp Makefile luci-app-mybaby/
           cp -r luasrc luci-app-mybaby/
           cp -r htdocs luci-app-mybaby/
-          # Move files/ root configs if they exist
-          if [ -d "files" ]; then cp -r files luci-app-mybaby/; fi
+          cp -r files luci-app-mybaby/
 
       - name: Build IPK using OpenWrt SDK
         uses: immortalwrt/gh-action-sdk@master
@@ -70,10 +70,8 @@ jobs:
           ARCH: ${{ matrix.arch }}
           FEEDNAME: mybaby
           PACKAGES: luci-app-mybaby
-          # We point to the parent directory of our newly structured package
-          # so the SDK finds it as a local feed
-          DIRECTORY: .
-          NO_SUBDIR: 0
+          DIRECTORY: luci-app-mybaby
+          NO_SUBDIR: 1
 
       - name: Upload IPK
         uses: actions/upload-artifact@v4
@@ -83,7 +81,7 @@ jobs:
 
   release:
     name: Create GitHub Release
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     needs: build_ipk
     runs-on: ubuntu-latest
     steps:
