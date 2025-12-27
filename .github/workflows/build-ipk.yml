@@ -87,11 +87,14 @@ jobs:
             tar -I zstd -xf openwrt-sdk-ipq40xx-generic_gcc-14.3.0_musl_eabi.Linux-x86_64.tar.zst
           fi
           
+          # 找到解压后的SDK目录并进入
+          SDK_DIR=$(ls -d openwrt-sdk-* | head -n 1)
+          cd "$SDK_DIR"
+          
           # 复制包到SDK目录
-          cp -r ../package/luci-app-mybaby openwrt-sdk-*/package/
+          cp -r ../package/luci-app-mybaby package/
           
           # 构建IPK
-          cd openwrt-sdk-*
           make package/luci-app-mybaby/compile V=s
 
       - name: Upload IPK
