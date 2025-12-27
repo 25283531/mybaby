@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Device, Platform, PluginState } from './types';
 import { INITIAL_DEVICES, INITIAL_PLATFORMS } from './constants';

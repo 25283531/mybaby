@@ -1,0 +1,83 @@
+
+name: Build OpenWrt IPK
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build_frontend:
+    name: Build React Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install
+      - name: Build Dashboard
+        run: npm run build
+      - name: Upload dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist/
+
+  build_ipk:
+    name: Build IPK (${{ matrix.arch }})
+    needs: build_frontend
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            sdk_url: https://downloads.openwrt.org/snapshots/targets/x86/64/
+          - arch: arm_cortex-a15_neon-vfpv4
+            sdk_url: https://downloads.openwrt.org/snapshots/targets/armvirt/32/
+          - arch: aarch64_generic
+            sdk_url: https://downloads.openwrt.org/snapshots/targets/armsr/armv8/
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download built frontend
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist/
+
+      - name: Build IPK using OpenWrt SDK
+        uses: immortalwrt/gh-action-sdk@master
+        env:
+          ARCH: ${{ matrix.arch }}
+          FEEDNAME: mybaby
+          PACKAGES: luci-app-mybaby
+          NO_SUBDIR: 1
+
+      - name: Upload IPK
+        uses: actions/upload-artifact@v4
+        with:
+          name: luci-app-mybaby_${{ matrix.arch }}
+          path: bin/packages/*/mybaby/luci-app-mybaby*.ipk
+
+  release:
+    name: Create GitHub Release
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    needs: build_ipk
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all IPKs
+        uses: actions/download-artifact@v4
+        
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: "**/*.ipk"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
