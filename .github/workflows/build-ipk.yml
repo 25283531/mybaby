@@ -43,7 +43,7 @@ jobs:
             sdk_url: https://downloads.openwrt.org/snapshots/targets/x86/64/
           - arch: aarch64_generic
             sdk_url: https://downloads.openwrt.org/snapshots/targets/armsr/armv8/
-          - arch: armv7_cortex-a9
+          - arch: armv7
             sdk_url: https://downloads.openwrt.org/snapshots/targets/armsr/armv7/
 
     steps:
@@ -68,12 +68,14 @@ jobs:
           cp -r luasrc package/luci-app-mybaby/
           cp -r htdocs package/luci-app-mybaby/
           cp -r files package/luci-app-mybaby/
+          
+          # Also copy htdocs to the root directory for Makefile compatibility
+          cp -r htdocs ./
 
       - name: Build IPK using OpenWrt SDK
-        uses: immortalwrt/gh-action-sdk@master
+        uses: openwrt/gh-action-sdk@master
         env:
           ARCH: ${{ matrix.arch }}
-          FEEDNAME: mybaby
           PACKAGES: luci-app-mybaby
           DIRECTORY: package/luci-app-mybaby
           NO_SUBDIR: 1
