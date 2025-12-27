@@ -1,0 +1,17 @@
+{
+	"luci-app-mybaby": {
+		"description": "Grant access to MyBaby configuration",
+		"read": {
+			"uci": [ "tv_limit" ],
+			"file": {
+				"/etc/config/tv_limit": [ "read" ]
+			}
+		},
+		"write": {
+			"uci": [ "tv_limit" ],
+			"file": {
+				"/etc/config/tv_limit": [ "write" ]
+			}
+		}
+	}
+}
