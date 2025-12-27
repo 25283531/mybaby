@@ -72,13 +72,23 @@ jobs:
           # Also copy htdocs to the root directory for Makefile compatibility
           cp -r htdocs ./
 
-      - name: Build IPK using OpenWrt SDK
-        uses: openwrt/gh-action-sdk@master
-        env:
-          ARCH: ${{ matrix.arch }}
-          PACKAGES: luci-app-mybaby
-          DIRECTORY: package/luci-app-mybaby
-          NO_SUBDIR: 1
+      - name: Build IPK using Docker
+        run: |
+          # 下载并解压SDK
+          mkdir -p sdk
+          cd sdk
+          
+          # 获取SDK文件名
+          SDK_FILE=$(wget -qO- "${{ matrix.sdk_url }}?C=M;O=D" | grep -o "openwrt-sdk-${{ matrix.arch }}-[^\"]*tar.xz" | head -1)
+          wget "${{ matrix.sdk_url }}/${SDK_FILE}"
+          tar -xJf ${SDK_FILE}
+          
+          # 复制包到SDK目录
+          cp -r ../package/luci-app-mybaby openwrt-sdk-*/package/
+          
+          # 构建IPK
+          cd openwrt-sdk-*
+          make package/luci-app-mybaby/compile V=s
 
       - name: Upload IPK
         uses: actions/upload-artifact@v4

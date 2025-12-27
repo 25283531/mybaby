@@ -1,4 +1,20 @@
+-- LuCI controller for MyBaby TV Limit application
 module("luci.controller.mybaby", package.seeall)
+
+-- Import required LuCI modules
+local nixio = require "nixio"
+local sys = require "luci.sys"
+local http = require "luci.http"
+local uci = require "luci.model.uci".cursor()
+local json = require "luci.jsonc"
+
+-- Import LuCI dispatcher functions (these are globally available in LuCI)
+local entry = luci.dispatcher.entry
+local template = luci.dispatcher.template
+local cbi = luci.dispatcher.cbi
+local call = luci.dispatcher.call
+local firstchild = luci.dispatcher.firstchild
+local _ = luci.i18n.translate
 
 function index()
 	entry({"admin", "services", "mybaby"}, firstchild(), _("MyBaby"), 30).dependent = false
@@ -15,7 +31,6 @@ function index()
 end
 
 function get_devices()
-	local uci = require "luci.model.uci".cursor()
 	local devices = {}
 	
 	uci:foreach("tv_limit", "device", function(s)
@@ -28,20 +43,16 @@ function get_devices()
 		})
 	end)
 	
-	luci.http.prepare_content("application/json")
-	luci.http.write_json(devices)
+	http.prepare_content("application/json")
+	http.write_json(devices)
 end
 
 function add_device()
-	local uci = require "luci.model.uci".cursor()
-	local json = require "luci.jsonc"
-	
-	local http = require "luci.http"
 	local content = http.content()
 	local data = json.parse(content)
 	
 	if not data or not data.mac or not data.name then
-		luci.http.status(400, "Bad Request")
+		http.status(400, "Bad Request")
 		return
 	end
 	
@@ -53,20 +64,16 @@ function add_device()
 	uci:set("tv_limit", section, "enabled", data.enabled and "1" or "0")
 	uci:commit("tv_limit")
 	
-	luci.http.prepare_content("application/json")
-	luci.http.write_json({success = true})
+	http.prepare_content("application/json")
+	http.write_json({success = true})
 end
 
 function remove_device()
-	local uci = require "luci.model.uci".cursor()
-	local json = require "luci.jsonc"
-	
-	local http = require "luci.http"
 	local content = http.content()
 	local data = json.parse(content)
 	
 	if not data or not data.mac then
-		luci.http.status(400, "Bad Request")
+		http.status(400, "Bad Request")
 		return
 	end
 	
@@ -78,20 +85,16 @@ function remove_device()
 	end)
 	uci:commit("tv_limit")
 	
-	luci.http.prepare_content("application/json")
-	luci.http.write_json({success = true})
+	http.prepare_content("application/json")
+	http.write_json({success = true})
 end
 
 function update_device()
-	local uci = require "luci.model.uci".cursor()
-	local json = require "luci.jsonc"
-	
-	local http = require "luci.http"
 	local content = http.content()
 	local data = json.parse(content)
 	
 	if not data or not data.mac then
-		luci.http.status(400, "Bad Request")
+		http.status(400, "Bad Request")
 		return
 	end
 	
@@ -106,31 +109,26 @@ function update_device()
 	end)
 	uci:commit("tv_limit")
 	
-	luci.http.prepare_content("application/json")
-	luci.http.write_json({success = true})
+	http.prepare_content("application/json")
+	http.write_json({success = true})
 end
 
 function get_status()
-	local uci = require "luci.model.uci".cursor()
 	local status = {
 		enabled = uci:get("tv_limit", "global", "enabled") == "1",
 		mode = uci:get("tv_limit", "global", "mode") or "quota"
 	}
 	
-	luci.http.prepare_content("application/json")
-	luci.http.write_json(status)
+	http.prepare_content("application/json")
+	http.write_json(status)
 end
 
 function save_config()
-	local uci = require "luci.model.uci".cursor()
-	local json = require "luci.jsonc"
-	
-	local http = require "luci.http"
 	local content = http.content()
 	local data = json.parse(content)
 	
 	if not data then
-		luci.http.status(400, "Bad Request")
+		http.status(400, "Bad Request")
 		return
 	end
 	
@@ -139,6 +137,6 @@ function save_config()
 	
 	uci:commit("tv_limit")
 	
-	luci.http.prepare_content("application/json")
-	luci.http.write_json({success = true})
+	http.prepare_content("application/json")
+	http.write_json({success = true})
 end
