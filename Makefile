@@ -26,7 +26,9 @@ define Build/Prepare
 		$(CP) $(po) $(PKG_BUILD_DIR)/; \
 	)
 	$(INSTALL_DIR) $(PKG_BUILD_DIR)/htdocs
-	$(CP) -r $(CURDIR)/htdocs/* $(PKG_BUILD_DIR)/htdocs/ 2>/dev/null || true
+	if [ -d "$(CURDIR)/htdocs" ]; then \
+		$(CP) -r $(CURDIR)/htdocs/* $(PKG_BUILD_DIR)/htdocs/; \
+	fi
 endef
 
 define Build/Configure
@@ -56,7 +58,9 @@ define Package/luci-app-mybaby/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/luasrc/view/mybaby/main.htm $(1)/usr/lib/lua/luci/view/mybaby/main.htm
 	
 	$(INSTALL_DIR) $(1)/www/luci-static/mybaby
-	$(CP) $(PKG_BUILD_DIR)/htdocs/* $(1)/www/luci-static/mybaby/
+	if [ -d "$(PKG_BUILD_DIR)/htdocs" ]; then \
+		$(CP) $(PKG_BUILD_DIR)/htdocs/* $(1)/www/luci-static/mybaby/; \
+	fi
 endef
 
 $(eval $(call BuildPackage,luci-app-mybaby))

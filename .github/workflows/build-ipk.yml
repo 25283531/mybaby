@@ -68,9 +68,6 @@ jobs:
           cp -r luasrc package/luci-app-mybaby/
           cp -r htdocs package/luci-app-mybaby/
           cp -r files package/luci-app-mybaby/
-          
-          # Also copy htdocs to the root directory for Makefile compatibility
-          cp -r htdocs ./
 
       - name: Build IPK using Docker
         run: |
