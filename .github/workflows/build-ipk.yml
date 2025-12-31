@@ -112,17 +112,17 @@ jobs:
           make defconfig >/dev/null 2>&1
           
           echo "Starting compilation..."
-          make package/luci-app-mybaby/compile V=s
+          make package/luci-app-mybaby/compile
           
           # Debug: List generated ipk files
           echo "Listing generated IPK files:"
           find bin -name "*.ipk"
           
           # Copy IPK to a predictable location
-          mkdir -p ../output
-          find bin -name "luci-app-mybaby*.ipk" -exec cp {} ../output/ \;
-          echo "Copied IPK files to ../output:"
-          ls -l ../output/
+          mkdir -p "$GITHUB_WORKSPACE/output"
+          find bin -name "luci-app-mybaby*.ipk" -exec cp {} "$GITHUB_WORKSPACE/output/" \;
+          echo "Copied IPK files to $GITHUB_WORKSPACE/output:"
+          ls -l "$GITHUB_WORKSPACE/output/"
 
       - name: Upload IPK
         uses: actions/upload-artifact@v4
