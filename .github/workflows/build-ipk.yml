@@ -71,21 +71,22 @@ jobs:
 
       - name: Build IPK using Docker
         run: |
-          # 下载并解压SDK
+          # Download and extract SDK
           mkdir -p sdk
           cd sdk
           
-          # 根据架构下载不同的SDK文件
-          if [ "${{ matrix.arch }}" = "x86_64" ]; then
-            wget "${{ matrix.sdk_url }}/openwrt-sdk-x86-64_gcc-14.3.0_musl.Linux-x86_64.tar.zst"
-            tar -I zstd -xf openwrt-sdk-x86-64_gcc-14.3.0_musl.Linux-x86_64.tar.zst
-          elif [ "${{ matrix.arch }}" = "aarch64_generic" ]; then
-            wget "${{ matrix.sdk_url }}/openwrt-sdk-armsr-armv8_gcc-14.3.0_musl.Linux-x86_64.tar.zst"
-            tar -I zstd -xf openwrt-sdk-armsr-armv8_gcc-14.3.0_musl.Linux-x86_64.tar.zst
-          elif [ "${{ matrix.arch }}" = "arm_cortex-a7_neon-vfpv4" ]; then
-            wget "${{ matrix.sdk_url }}/openwrt-sdk-ipq40xx-generic_gcc-14.3.0_musl_eabi.Linux-x86_64.tar.zst"
-            tar -I zstd -xf openwrt-sdk-ipq40xx-generic_gcc-14.3.0_musl_eabi.Linux-x86_64.tar.zst
+          # Dynamically find SDK filename from the URL to avoid hardcoded version mismatches
+          echo "Searching for SDK at ${{ matrix.sdk_url }}..."
+          SDK_FILE=$(curl -s "${{ matrix.sdk_url }}" | grep -o 'openwrt-sdk-[^"]*Linux-x86_64.tar.zst' | head -n 1)
+          
+          if [ -z "$SDK_FILE" ]; then
+            echo "Error: Could not find SDK file!"
+            exit 1
           fi
+          
+          echo "Found SDK: $SDK_FILE"
+          wget "${{ matrix.sdk_url }}/$SDK_FILE"
+          tar -I zstd -xf "$SDK_FILE"
           
           # 找到解压后的SDK目录并进入
           SDK_DIR=$(ls -d openwrt-sdk-* | head -n 1)

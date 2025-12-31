@@ -22,9 +22,10 @@ define Package/luci-app-mybaby/description
 endef
 
 define Build/Prepare
-	$(foreach po,$(wildcard ${CURDIR}/files/*), \
-		$(CP) $(po) $(PKG_BUILD_DIR)/; \
-	)
+	$(INSTALL_DIR) $(PKG_BUILD_DIR)/files
+	$(CP) $(CURDIR)/files/* $(PKG_BUILD_DIR)/files/
+	$(INSTALL_DIR) $(PKG_BUILD_DIR)/luasrc
+	$(CP) $(CURDIR)/luasrc/* $(PKG_BUILD_DIR)/luasrc/
 	$(INSTALL_DIR) $(PKG_BUILD_DIR)/htdocs
 	if [ -d "$(CURDIR)/htdocs" ]; then \
 		$(CP) -r $(CURDIR)/htdocs/* $(PKG_BUILD_DIR)/htdocs/; \
