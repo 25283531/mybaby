@@ -117,9 +117,15 @@ jobs:
           # Debug: List generated ipk files
           echo "Listing generated IPK files:"
           find bin -name "*.ipk"
+          
+          # Copy IPK to a predictable location
+          mkdir -p ../output
+          find bin -name "luci-app-mybaby*.ipk" -exec cp {} ../output/ \;
+          echo "Copied IPK files to ../output:"
+          ls -l ../output/
 
       - name: Upload IPK
         uses: actions/upload-artifact@v4
         with:
           name: luci-app-mybaby-${{ matrix.arch }}.ipk
-          path: sdk/**/bin/packages/**/luci-app-mybaby*.ipk
+          path: output/*.ipk
