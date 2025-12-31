@@ -106,9 +106,13 @@ jobs:
           
           echo "Starting compilation..."
           make package/luci-app-mybaby/compile V=s
+          
+          # Debug: List generated ipk files
+          echo "Listing generated IPK files:"
+          find bin -name "*.ipk"
 
       - name: Upload IPK
         uses: actions/upload-artifact@v4
         with:
           name: luci-app-mybaby-${{ matrix.arch }}.ipk
-          path: sdk/openwrt-sdk-*/bin/packages/*/packages/luci-app-mybaby*.ipk
+          path: sdk/*/bin/packages/*/base/luci-app-mybaby*.ipk
