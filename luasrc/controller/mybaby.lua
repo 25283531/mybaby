@@ -64,6 +64,9 @@ function add_device()
 	uci:set("tv_limit", section, "enabled", data.enabled and "1" or "0")
 	uci:commit("tv_limit")
 	
+	-- Apply changes
+	sys.call("/etc/init.d/tv_limit reload >/dev/null 2>&1")
+	
 	http.prepare_content("application/json")
 	http.write_json({success = true})
 end
@@ -84,6 +87,9 @@ function remove_device()
 		end
 	end)
 	uci:commit("tv_limit")
+	
+	-- Apply changes
+	sys.call("/etc/init.d/tv_limit reload >/dev/null 2>&1")
 	
 	http.prepare_content("application/json")
 	http.write_json({success = true})
@@ -108,6 +114,9 @@ function update_device()
 		end
 	end)
 	uci:commit("tv_limit")
+	
+	-- Apply changes
+	sys.call("/etc/init.d/tv_limit reload >/dev/null 2>&1")
 	
 	http.prepare_content("application/json")
 	http.write_json({success = true})
@@ -136,6 +145,9 @@ function save_config()
 	if data.mode then uci:set("tv_limit", "global", "mode", data.mode) end
 	
 	uci:commit("tv_limit")
+	
+	-- Apply changes
+	sys.call("/etc/init.d/tv_limit reload >/dev/null 2>&1")
 	
 	http.prepare_content("application/json")
 	http.write_json({success = true})

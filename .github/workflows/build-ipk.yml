@@ -96,6 +96,14 @@ jobs:
           
           # 进入SDK目录并构建IPK
           cd "$SDK_DIR"
+          
+          # 更新和安装 feeds (解决依赖问题)
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+          
+          # 生成默认配置 (避免 menuconfig 交互)
+          make defconfig
+          
           make package/luci-app-mybaby/compile V=s
 
       - name: Upload IPK

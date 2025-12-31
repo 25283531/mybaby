@@ -12,6 +12,9 @@
 			"file": {
 				"/etc/config/tv_limit": [ "write" ]
 			}
+		},
+		"exec": {
+			"/etc/init.d/tv_limit": [ "exec" ]
 		}
 	}
 }
