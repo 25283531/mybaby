@@ -85,8 +85,15 @@ jobs:
           fi
           
           echo "Found SDK: $SDK_FILE"
-          wget "${{ matrix.sdk_url }}/$SDK_FILE"
-          tar -I zstd -xf "$SDK_FILE"
+          wget -q "${{ matrix.sdk_url }}/$SDK_FILE"
+          
+          # Verify file integrity (basic check)
+          if [ ! -s "$SDK_FILE" ]; then
+            echo "Error: Downloaded SDK file is empty!"
+            exit 1
+          fi
+          
+          tar -I zstd -xf "$SDK_FILE" || { echo "Extraction failed, retrying download..."; rm "$SDK_FILE"; wget "${{ matrix.sdk_url }}/$SDK_FILE"; tar -I zstd -xf "$SDK_FILE"; }
           
           # 找到解压后的SDK目录并进入
           SDK_DIR=$(ls -d openwrt-sdk-* | head -n 1)
@@ -115,4 +122,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: luci-app-mybaby-${{ matrix.arch }}.ipk
-          path: sdk/*/bin/packages/*/base/luci-app-mybaby*.ipk
+          path: sdk/**/bin/packages/**/luci-app-mybaby*.ipk
