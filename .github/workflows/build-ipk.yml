@@ -77,7 +77,7 @@ jobs:
           
           # Dynamically find SDK filename from the URL to avoid hardcoded version mismatches
           echo "Searching for SDK at ${{ matrix.sdk_url }}..."
-          SDK_FILE=$(curl -s "${{ matrix.sdk_url }}" | grep -o 'openwrt-sdk-[^"]*Linux-x86_64.tar.zst' | head -n 1)
+          SDK_FILE=$(curl -sL "${{ matrix.sdk_url }}" | grep -o 'openwrt-sdk-[^"]*Linux-x86_64.tar.zst' | head -n 1)
           
           if [ -z "$SDK_FILE" ]; then
             echo "Error: Could not find SDK file!"
@@ -97,13 +97,14 @@ jobs:
           # 进入SDK目录并构建IPK
           cd "$SDK_DIR"
           
-          # 更新和安装 feeds (解决依赖问题)
-          ./scripts/feeds update -a
-          ./scripts/feeds install -a
+          # 更新和安装 feeds (解决依赖问题) - 静默模式以减少日志大小
+          ./scripts/feeds update -a >/dev/null 2>&1
+          ./scripts/feeds install -a >/dev/null 2>&1
           
           # 生成默认配置 (避免 menuconfig 交互)
-          make defconfig
+          make defconfig >/dev/null 2>&1
           
+          echo "Starting compilation..."
           make package/luci-app-mybaby/compile V=s
 
       - name: Upload IPK

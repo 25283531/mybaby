@@ -36,7 +36,6 @@ define Build/Configure
 endef
 
 define Build/Compile
-	$(call Build/Compile/Default)
 endef
 
 define Package/luci-app-mybaby/install
