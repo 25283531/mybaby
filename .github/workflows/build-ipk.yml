@@ -40,11 +40,11 @@ jobs:
       matrix:
         include:
           - arch: x86_64
-            sdk_url: https://downloads.openwrt.org/snapshots/targets/x86/64/
+            sdk_suffix: targets/x86/64/
           - arch: aarch64_generic
-            sdk_url: https://downloads.openwrt.org/snapshots/targets/armsr/armv8/
+            sdk_suffix: targets/armsr/armv8/
           - arch: arm_cortex-a7_neon-vfpv4
-            sdk_url: https://downloads.openwrt.org/snapshots/targets/ipq40xx/generic/
+            sdk_suffix: targets/ipq40xx/generic/
 
     steps:
       - uses: actions/checkout@v4
@@ -76,7 +76,9 @@ jobs:
           cd sdk
           
           # Dynamically find SDK filename from the URL to avoid hardcoded version mismatches
-          INDEX_URL="${{ matrix.sdk_url }}"
+          LATEST_VER=$(curl -sL "https://downloads.openwrt.org/releases/" | grep -oE 'href="[0-9]+\.[0-9]+(\.[0-9]+)?/' | sed -E 's/href="(.*)\//\1/' | sort -V | tail -n 1)
+          if [ -z "$LATEST_VER" ]; then echo "Error: Could not determine latest release version"; exit 1; fi
+          INDEX_URL="https://downloads.openwrt.org/releases/$LATEST_VER/${{ matrix.sdk_suffix }}"
           SDK_FILE=$(curl -sL "$INDEX_URL" | grep -oE 'openwrt-sdk-[^"]*Linux-x86_64\.tar\.(zst|xz)' | head -n 1)
           if [ -z "$SDK_FILE" ]; then
             echo "Error: Could not find SDK file on official index"
@@ -143,12 +145,10 @@ jobs:
           
           # Debug: List generated ipk files (search everywhere)
           echo "Listing packages found in SDK:"
-          find bin -name "luci-app-mybaby*.apk"
           find bin -name "luci-app-mybaby*.ipk"
           
           # Copy IPK to a predictable location
           mkdir -p "$GITHUB_WORKSPACE/output"
-          find bin -name "luci-app-mybaby*.apk" -exec cp {} "$GITHUB_WORKSPACE/output/" \;
           find bin -name "luci-app-mybaby*.ipk" -exec cp {} "$GITHUB_WORKSPACE/output/" \;
           echo "Copied IPK files to $GITHUB_WORKSPACE/output:"
           ls -l "$GITHUB_WORKSPACE/output/"
@@ -157,9 +157,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: openwrt-packages-${{ matrix.arch }}
-          path: |
-            output/luci-app-mybaby*.apk
-            output/luci-app-mybaby*.ipk
+          path: output/luci-app-mybaby*.ipk
 
   publish_release:
     name: Publish Release
