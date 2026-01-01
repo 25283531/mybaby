@@ -76,16 +76,27 @@ jobs:
           cd sdk
           
           # Dynamically find SDK filename from the URL to avoid hardcoded version mismatches
-          echo "Searching for SDK at ${{ matrix.sdk_url }}..."
-          SDK_FILE=$(curl -sL "${{ matrix.sdk_url }}" | grep -o 'openwrt-sdk-[^"]*Linux-x86_64.tar.zst' | head -n 1)
-          
-          if [ -z "$SDK_FILE" ]; then
-            echo "Error: Could not find SDK file!"
+          echo "Searching for SDK with mainland mirrors..."
+          MATRIX_URL="${{ matrix.sdk_url }}"
+          REL_PATH="${MATRIX_URL#https://downloads.openwrt.org}"
+          MIRRORS=("https://mirrors.aliyun.com/openwrt" "https://mirrors.tuna.tsinghua.edu.cn/openwrt" "https://mirrors.ustc.edu.cn/openwrt" "https://downloads.openwrt.org")
+          SELECTED_URL=""
+          for BASE in "${MIRRORS[@]}"; do
+            TRY_URL="${BASE}${REL_PATH}"
+            echo "Trying: $TRY_URL"
+            SDK_FILE=$(curl -sL "$TRY_URL" | grep -o 'openwrt-sdk-[^"]*Linux-x86_64.tar.zst' | head -n 1)
+            if [ -n "$SDK_FILE" ]; then
+              SELECTED_URL="$TRY_URL"
+              echo "Selected mirror: $BASE"
+              break
+            fi
+          done
+          if [ -z "$SELECTED_URL" ]; then
+            echo "Error: Could not find SDK file on mirrors"
             exit 1
           fi
-          
           echo "Found SDK: $SDK_FILE"
-          wget -q "${{ matrix.sdk_url }}/$SDK_FILE"
+          wget -q "$SELECTED_URL/$SDK_FILE"
           
           # Verify file integrity (basic check)
           if [ ! -s "$SDK_FILE" ]; then
@@ -93,7 +104,24 @@ jobs:
             exit 1
           fi
           
-          tar -I zstd -xf "$SDK_FILE" || { echo "Extraction failed, retrying download..."; rm "$SDK_FILE"; wget "${{ matrix.sdk_url }}/$SDK_FILE"; tar -I zstd -xf "$SDK_FILE"; }
+          # Extract with format detection (.tar.zst / .tar.xz)
+          extract_sdk() {
+            local file="$1"
+            if [[ "$file" =~ \.tar\.zst$ ]]; then
+              if tar --help 2>/dev/null | grep -q -- '--zstd'; then
+                tar --zstd -xf "$file" || unzstd -c "$file" | tar -xf -
+              else
+                unzstd -c "$file" | tar -xf -
+              fi
+            elif [[ "$file" =~ \.tar\.xz$ ]]; then
+              tar -J -xf "$file"
+            else
+              echo "Unknown archive format: $file"
+              return 1
+            fi
+          }
+          
+          extract_sdk "$SDK_FILE" || { echo "Extraction failed, retrying download..."; rm "$SDK_FILE"; wget "$SELECTED_URL/$SDK_FILE"; extract_sdk "$SDK_FILE"; }
           
           # 找到解压后的SDK目录并进入
           SDK_DIR=$(ls -d openwrt-sdk-* | head -n 1)
