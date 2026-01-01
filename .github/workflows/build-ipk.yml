@@ -69,7 +69,7 @@ jobs:
           cp -r htdocs package/luci-app-mybaby/
           cp -r files package/luci-app-mybaby/
 
-      - name: Build IPK using Docker
+      - name: Build IPK using SDK
         run: |
           # Download and extract SDK
           mkdir -p sdk
@@ -109,18 +109,23 @@ jobs:
           ./scripts/feeds install -a >/dev/null 2>&1
           
           # 生成默认配置 (避免 menuconfig 交互)
+          echo "CONFIG_PACKAGE_luci-app-mybaby=m" >> .config
           make defconfig >/dev/null 2>&1
+          
+          # Debug: Check if package is selected in .config
+          echo "Checking .config for luci-app-mybaby:"
+          grep "luci-app-mybaby" .config || echo "Package NOT found in .config!"
           
           echo "Starting compilation..."
           make package/luci-app-mybaby/compile
           
-          # Debug: List generated ipk files
-          echo "Listing generated IPK files:"
-          find bin -name "*.ipk"
+          # Debug: List generated ipk files (search everywhere)
+          echo "Listing all IPK files in SDK:"
+          find . -name "*.ipk"
           
           # Copy IPK to a predictable location
           mkdir -p "$GITHUB_WORKSPACE/output"
-          find bin -name "luci-app-mybaby*.ipk" -exec cp {} "$GITHUB_WORKSPACE/output/" \;
+          find . -name "luci-app-mybaby*.ipk" -exec cp {} "$GITHUB_WORKSPACE/output/" \;
           echo "Copied IPK files to $GITHUB_WORKSPACE/output:"
           ls -l "$GITHUB_WORKSPACE/output/"
 

@@ -47,20 +47,17 @@ define Package/luci-app-mybaby/install
 	
 	$(INSTALL_DIR) $(1)/etc/tv_limit
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/etc/tv_limit/nft.sh $(1)/etc/tv_limit/nft.sh
+
+	$(INSTALL_DIR) $(1)/usr/lib/lua/luci
+	$(CP) $(PKG_BUILD_DIR)/luasrc/* $(1)/usr/lib/lua/luci/
+	
+	$(INSTALL_DIR) $(1)/www
+	if [ -d "$(PKG_BUILD_DIR)/htdocs" ]; then \
+		$(CP) $(PKG_BUILD_DIR)/htdocs/* $(1)/www/; \
+	fi
 	
 	$(INSTALL_DIR) $(1)/usr/share/rpcd/acl.d
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/usr/share/rpcd/acl.d/luci-app-mybaby.json $(1)/usr/share/rpcd/acl.d/luci-app-mybaby.json
-	
-	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/controller
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/luasrc/controller/mybaby.lua $(1)/usr/lib/lua/luci/controller/mybaby.lua
-	
-	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/view/mybaby
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/luasrc/view/mybaby/main.htm $(1)/usr/lib/lua/luci/view/mybaby/main.htm
-	
-	$(INSTALL_DIR) $(1)/www/luci-static/mybaby
-	if [ -d "$(PKG_BUILD_DIR)/htdocs" ]; then \
-		$(CP) $(PKG_BUILD_DIR)/htdocs/* $(1)/www/luci-static/mybaby/; \
-	fi
 endef
 
 $(eval $(call BuildPackage,luci-app-mybaby))
