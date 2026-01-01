@@ -76,27 +76,19 @@ jobs:
           cd sdk
           
           # Dynamically find SDK filename from the URL to avoid hardcoded version mismatches
-          echo "Searching for SDK with mainland mirrors..."
-          MATRIX_URL="${{ matrix.sdk_url }}"
-          REL_PATH="${MATRIX_URL#https://downloads.openwrt.org}"
-          MIRRORS=("https://mirrors.aliyun.com/openwrt" "https://mirrors.tuna.tsinghua.edu.cn/openwrt" "https://mirrors.ustc.edu.cn/openwrt" "https://downloads.openwrt.org")
-          SELECTED_URL=""
-          for BASE in "${MIRRORS[@]}"; do
-            TRY_URL="${BASE}${REL_PATH}"
-            echo "Trying: $TRY_URL"
-            SDK_FILE=$(curl -sL "$TRY_URL" | grep -o 'openwrt-sdk-[^"]*Linux-x86_64.tar.zst' | head -n 1)
-            if [ -n "$SDK_FILE" ]; then
-              SELECTED_URL="$TRY_URL"
-              echo "Selected mirror: $BASE"
-              break
-            fi
-          done
-          if [ -z "$SELECTED_URL" ]; then
-            echo "Error: Could not find SDK file on mirrors"
+          INDEX_URL="${{ matrix.sdk_url }}"
+          SDK_FILE=$(curl -sL "$INDEX_URL" | grep -oE 'openwrt-sdk-[^"]*Linux-x86_64\.tar\.(zst|xz)' | head -n 1)
+          if [ -z "$SDK_FILE" ]; then
+            echo "Error: Could not find SDK file on official index"
             exit 1
           fi
           echo "Found SDK: $SDK_FILE"
-          wget -q "$SELECTED_URL/$SDK_FILE"
+          tries=5
+          wget -q --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 --tries=$tries -O "$SDK_FILE" "$INDEX_URL/$SDK_FILE"
+          if [ ! -s "$SDK_FILE" ]; then
+            echo "Error: Downloaded SDK file is empty or failed"
+            exit 4
+          fi
           
           # Verify file integrity (basic check)
           if [ ! -s "$SDK_FILE" ]; then
@@ -121,7 +113,7 @@ jobs:
             fi
           }
           
-          extract_sdk "$SDK_FILE" || { echo "Extraction failed, retrying download..."; rm "$SDK_FILE"; wget "$SELECTED_URL/$SDK_FILE"; extract_sdk "$SDK_FILE"; }
+          extract_sdk "$SDK_FILE" || { echo "Extraction failed, retrying download..."; rm -f "$SDK_FILE"; wget -q --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 --tries=$tries -O "$SDK_FILE" "$INDEX_URL/$SDK_FILE"; extract_sdk "$SDK_FILE"; }
           
           # 找到解压后的SDK目录并进入
           SDK_DIR=$(ls -d openwrt-sdk-* | head -n 1)
