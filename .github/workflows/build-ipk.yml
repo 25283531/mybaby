@@ -150,22 +150,23 @@ jobs:
           make package/index
           
           # Debug: List generated ipk files (search everywhere)
-          echo "Listing all IPK files in SDK:"
+          echo "Listing packages found in SDK:"
+          find bin -name "*.apk"
           find bin -name "*.ipk"
           
           # Copy IPK to a predictable location
           mkdir -p "$GITHUB_WORKSPACE/output"
-          COUNT=$(find bin -name "luci-app-mybaby*.ipk" | wc -l)
-          if [ "$COUNT" -eq 0 ]; then
-            find bin -name "*.ipk" -exec cp {} "$GITHUB_WORKSPACE/output/" \;
-          else
-            find bin -name "luci-app-mybaby*.ipk" -exec cp {} "$GITHUB_WORKSPACE/output/" \;
-          fi
+          find bin -name "luci-app-mybaby*.apk" -exec cp {} "$GITHUB_WORKSPACE/output/" \;
+          find bin -name "luci-app-mybaby*.ipk" -exec cp {} "$GITHUB_WORKSPACE/output/" \;
+          find bin -name "*.apk" -exec cp {} "$GITHUB_WORKSPACE/output/" \;
+          find bin -name "*.ipk" -exec cp {} "$GITHUB_WORKSPACE/output/" \;
           echo "Copied IPK files to $GITHUB_WORKSPACE/output:"
           ls -l "$GITHUB_WORKSPACE/output/"
 
-      - name: Upload IPK
+      - name: Upload OpenWrt packages
         uses: actions/upload-artifact@v4
         with:
-          name: luci-app-mybaby-${{ matrix.arch }}.ipk
-          path: output/*.ipk
+          name: openwrt-packages-${{ matrix.arch }}
+          path: |
+            output/*.apk
+            output/*.ipk
