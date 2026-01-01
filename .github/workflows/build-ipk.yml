@@ -151,15 +151,13 @@ jobs:
           
           # Debug: List generated ipk files (search everywhere)
           echo "Listing packages found in SDK:"
-          find bin -name "*.apk"
-          find bin -name "*.ipk"
+          find bin -name "luci-app-mybaby*.apk"
+          find bin -name "luci-app-mybaby*.ipk"
           
           # Copy IPK to a predictable location
           mkdir -p "$GITHUB_WORKSPACE/output"
           find bin -name "luci-app-mybaby*.apk" -exec cp {} "$GITHUB_WORKSPACE/output/" \;
           find bin -name "luci-app-mybaby*.ipk" -exec cp {} "$GITHUB_WORKSPACE/output/" \;
-          find bin -name "*.apk" -exec cp {} "$GITHUB_WORKSPACE/output/" \;
-          find bin -name "*.ipk" -exec cp {} "$GITHUB_WORKSPACE/output/" \;
           echo "Copied IPK files to $GITHUB_WORKSPACE/output:"
           ls -l "$GITHUB_WORKSPACE/output/"
 
@@ -168,5 +166,35 @@ jobs:
         with:
           name: openwrt-packages-${{ matrix.arch }}
           path: |
-            output/*.apk
-            output/*.ipk
+            output/luci-app-mybaby*.apk
+            output/luci-app-mybaby*.ipk
+
+  publish_release:
+    name: Publish Release
+    needs: build_ipk
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download x86_64 packages
+        uses: actions/download-artifact@v4
+        with:
+          name: openwrt-packages-x86_64
+          path: release_assets/x86_64
+      - name: Download aarch64 packages
+        uses: actions/download-artifact@v4
+        with:
+          name: openwrt-packages-aarch64_generic
+          path: release_assets/aarch64_generic
+      - name: Download armv7 packages
+        uses: actions/download-artifact@v4
+        with:
+          name: openwrt-packages-arm_cortex-a7_neon-vfpv4
+          path: release_assets/arm_cortex-a7_neon-vfpv4
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_id }}
+          name: OpenWrt Packages build ${{ github.run_number }}
+          files: |
+            release_assets/**/*
