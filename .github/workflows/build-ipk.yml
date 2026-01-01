@@ -137,6 +137,7 @@ jobs:
           ./scripts/feeds install -a >/dev/null 2>&1
           
           # 生成默认配置 (避免 menuconfig 交互)
+          make defconfig >/dev/null 2>&1
           echo "CONFIG_PACKAGE_luci-app-mybaby=m" >> .config
           make defconfig >/dev/null 2>&1
           
@@ -145,15 +146,21 @@ jobs:
           grep "luci-app-mybaby" .config || echo "Package NOT found in .config!"
           
           echo "Starting compilation..."
-          make package/luci-app-mybaby/compile
+          make package/luci-app-mybaby/compile V=s
+          make package/index
           
           # Debug: List generated ipk files (search everywhere)
           echo "Listing all IPK files in SDK:"
-          find . -name "*.ipk"
+          find bin -name "*.ipk"
           
           # Copy IPK to a predictable location
           mkdir -p "$GITHUB_WORKSPACE/output"
-          find . -name "luci-app-mybaby*.ipk" -exec cp {} "$GITHUB_WORKSPACE/output/" \;
+          COUNT=$(find bin -name "luci-app-mybaby*.ipk" | wc -l)
+          if [ "$COUNT" -eq 0 ]; then
+            find bin -name "*.ipk" -exec cp {} "$GITHUB_WORKSPACE/output/" \;
+          else
+            find bin -name "luci-app-mybaby*.ipk" -exec cp {} "$GITHUB_WORKSPACE/output/" \;
+          fi
           echo "Copied IPK files to $GITHUB_WORKSPACE/output:"
           ls -l "$GITHUB_WORKSPACE/output/"
 
