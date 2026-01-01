@@ -130,9 +130,12 @@ jobs:
           ./scripts/feeds update -a >/dev/null 2>&1
           ./scripts/feeds install -a >/dev/null 2>&1
           
-          # 生成默认配置 (避免 menuconfig 交互)
-          make defconfig >/dev/null 2>&1
-          echo "CONFIG_PACKAGE_luci-app-mybaby=m" >> .config
+          # 生成最小配置，仅启用我们的包，避免构建所有 kmods
+          cat > .config <<'EOF'
+          CONFIG_ALL=n
+          CONFIG_ALL_KMODS=n
+          CONFIG_PACKAGE_luci-app-mybaby=m
+          EOF
           make defconfig >/dev/null 2>&1
           
           # Debug: Check if package is selected in .config
@@ -141,7 +144,6 @@ jobs:
           
           echo "Starting compilation..."
           make package/luci-app-mybaby/compile V=s
-          make package/index
           
           # Debug: List generated ipk files (search everywhere)
           echo "Listing packages found in SDK:"
