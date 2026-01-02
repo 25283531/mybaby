@@ -15,10 +15,10 @@ table_exists() {
 # Function to create nftables table and sets
 create_table() {
     nft add table inet $TABLE
-    nft add set inet $TABLE $SET_NAME { type ether addr; flags dynamic; timeout 1d; }
-    nft add chain inet $TABLE forward { type filter hook forward priority 0; }
-    nft add rule inet $TABLE forward ip daddr != { 192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12 } ether saddr @$SET_NAME drop
-    nft add rule inet $TABLE forward ip6 daddr != { fc00::/7, fd00::/8 } ether saddr @$SET_NAME drop
+    nft add set inet $TABLE $SET_NAME "{ type ether addr; flags dynamic; timeout 1d; }"
+    nft add chain inet $TABLE forward "{ type filter hook forward priority 0; }"
+    nft add rule inet $TABLE forward "ip daddr != { 192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12 } ether saddr @$SET_NAME drop"
+    nft add rule inet $TABLE forward "ip6 daddr != { fc00::/7, fd00::/8 } ether saddr @$SET_NAME drop"
 }
 
 # Function to add device to blocked list
@@ -36,7 +36,7 @@ add_device() {
     fi
     
     if table_exists; then
-        nft add element inet $TABLE $SET_NAME { $mac timeout $timeout }
+        nft add element inet $TABLE $SET_NAME "{ $mac timeout ${timeout}s }"
     else
         echo "Error: Table $TABLE does not exist"
         return 1
@@ -53,7 +53,7 @@ remove_device() {
     fi
     
     if table_exists; then
-        nft delete element inet $TABLE $SET_NAME { $mac }
+        nft delete element inet $TABLE $SET_NAME "{ $mac }"
     else
         echo "Error: Table $TABLE does not exist"
         return 1
@@ -70,7 +70,7 @@ is_blocked() {
     fi
     
     if table_exists; then
-        nft get element inet $TABLE $SET_NAME { $mac } >/dev/null 2>&1
+        nft get element inet $TABLE $SET_NAME "{ $mac }" >/dev/null 2>&1
     else
         echo "Error: Table $TABLE does not exist"
         return 1
