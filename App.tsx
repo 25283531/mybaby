@@ -3,12 +3,12 @@ import React, { useState } from 'react';
 import { Device, Platform, PluginState } from './types';
 import { INITIAL_DEVICES, INITIAL_PLATFORMS } from './constants';
 import Header from './components/Header';
-import DeviceList from './components/DeviceList';
+import DeviceList, { NetworkDeviceList } from './components/DeviceList';
 import PlatformManager from './components/PlatformManager';
 import Dashboard from './components/Dashboard';
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'devices' | 'platforms'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'device-list' | 'devices' | 'platforms'>('dashboard');
   const [pluginState, setPluginState] = useState<PluginState>({
     enabled: true,
     ipv6Support: true,
@@ -77,6 +77,7 @@ const App: React.FC = () => {
 
   const navItems = [
     { id: 'dashboard', label: '运行概览', icon: 'fa-chart-pie' },
+    { id: 'device-list', label: '设备列表', icon: 'fa-list-ul' },
     { id: 'devices', label: '受控设备', icon: 'fa-laptop' },
     { id: 'platforms', label: '限制规则', icon: 'fa-shield-halved' },
   ];
@@ -121,10 +122,19 @@ const App: React.FC = () => {
               platforms={pluginState.platforms}
             />
           )}
+
+          {activeTab === 'device-list' && (
+            <NetworkDeviceList
+              controlledDevices={pluginState.devices}
+              platforms={pluginState.platforms}
+              onAddControlledDevice={addDevice}
+            />
+          )}
           
           {activeTab === 'devices' && (
             <DeviceList 
               devices={pluginState.devices} 
+              platforms={pluginState.platforms}
               onUpdate={updateDevice}
               onAdd={addDevice}
               onDelete={deleteDevice}

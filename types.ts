@@ -21,6 +21,7 @@ export interface Device {
   mac: string;
   name: string;
   mode: ControlMode;
+  platformIds?: string[];
   quota?: QuotaConfig;
   schedules?: ScheduleWindow[];
   timeUsedToday: number; // in minutes

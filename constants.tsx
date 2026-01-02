@@ -22,6 +22,7 @@ export const INITIAL_DEVICES = [
     mac: '70:B3:D5:E2:B1:00',
     name: "小米电视 4S (客厅)",
     mode: 'QUOTA',
+    platformIds: ['1', '2', '3'],
     quota: { weekdayLimitMinutes: 60, weekendLimitMinutes: 120 },
     timeUsedToday: 45,
     status: 'online',
@@ -32,6 +33,7 @@ export const INITIAL_DEVICES = [
     mac: 'AC:BC:32:00:FF:12',
     name: "iPad Pro (小明)",
     mode: 'SCHEDULE',
+    platformIds: ['1', '2', '3'],
     schedules: [
       { id: 's1', start: '18:30', end: '20:00', days: [1, 2, 3, 4, 5] },
       { id: 's2', start: '10:00', end: '12:00', days: [0, 6] }
