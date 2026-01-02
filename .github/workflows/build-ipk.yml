@@ -76,19 +76,52 @@ jobs:
           cd sdk
           
           # Dynamically find SDK filename from the URL to avoid hardcoded version mismatches
-          LATEST_VER=$(curl -sL "https://downloads.openwrt.org/releases/" | grep -oE 'href="[0-9]+\.[0-9]+(\.[0-9]+)?/' | sed -E 's/href="(.*)\//\1/' | sort -V | tail -n 1)
-          if [ -z "$LATEST_VER" ]; then echo "Error: Could not determine latest release version"; exit 1; fi
-          INDEX_URL="https://downloads.openwrt.org/releases/$LATEST_VER/${{ matrix.sdk_suffix }}"
-          SDK_FILE=$(curl -sL "$INDEX_URL" | grep -oE 'openwrt-sdk-[^"]*Linux-x86_64\.tar\.(zst|xz)' | head -n 1)
-          if [ -z "$SDK_FILE" ]; then
-            echo "Error: Could not find SDK file on official index"
-            exit 1
-          fi
-          echo "Found SDK: $SDK_FILE"
+          RELEASES=$(curl -sL "https://downloads.openwrt.org/releases/" | grep -oE 'href="[0-9]+\.[0-9]+(\.[0-9]+)?/' | sed -E 's/href="(.*)\//\1/' | sort -Vr | head -n 6)
           tries=5
-          wget -q --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 --tries=$tries -O "$SDK_FILE" "$INDEX_URL/$SDK_FILE"
-          if [ ! -s "$SDK_FILE" ]; then
-            echo "Error: Downloaded SDK file is empty or failed"
+          SDK_FILE=""
+          for VER in $RELEASES; do
+            INDEX_URL="https://downloads.openwrt.org/releases/$VER/${{ matrix.sdk_suffix }}"
+            echo "Trying releases version: $VER"
+            CANDIDATE=$(curl -sL "$INDEX_URL" | grep -oE 'openwrt-sdk-[^"]*Linux-x86_64\.tar\.(zst|xz)' | head -n 1)
+            if [ -z "$CANDIDATE" ]; then
+              echo "No SDK found at $INDEX_URL, trying previous release..."
+              continue
+            fi
+            SDK_FILE="$CANDIDATE"
+            echo "Found SDK: $SDK_FILE at $INDEX_URL"
+            # Try wget first, with retries
+            wget -nv --retry-connrefused --waitretry=2 --read-timeout=30 --timeout=20 --tries=$tries -O "$SDK_FILE" "$INDEX_URL/$SDK_FILE" || {
+              echo "wget failed, falling back to curl"
+              curl -fL --retry $tries --retry-delay 2 -o "$SDK_FILE" "$INDEX_URL/$SDK_FILE" || {
+                echo "curl failed for $VER, trying previous release..."
+                rm -f "$SDK_FILE"
+                SDK_FILE=""
+                continue
+              }
+            }
+            if [ ! -s "$SDK_FILE" ]; then
+              echo "Downloaded SDK file is empty for $VER, trying previous release..."
+              rm -f "$SDK_FILE"
+              SDK_FILE=""
+              continue
+            fi
+            # Verify sha256 if available
+            SUM_URL="$INDEX_URL/sha256sums"
+            REMOTE_SHA=$(curl -sL "$SUM_URL" | grep " $SDK_FILE$" | awk '{print $1}')
+            if [ -n "$REMOTE_SHA" ]; then
+              LOCAL_SHA=$(sha256sum "$SDK_FILE" | awk '{print $1}')
+              if [ "$REMOTE_SHA" != "$LOCAL_SHA" ]; then
+                echo "Sha256 mismatch for $VER (remote $REMOTE_SHA != local $LOCAL_SHA), retrying previous release..."
+                rm -f "$SDK_FILE"
+                SDK_FILE=""
+                continue
+              fi
+            fi
+            # Success for this release
+            break
+          done
+          if [ -z "$SDK_FILE" ]; then
+            echo "Error: Could not download a valid SDK from releases"
             exit 4
           fi
           
@@ -115,7 +148,13 @@ jobs:
             fi
           }
           
-          extract_sdk "$SDK_FILE" || { echo "Extraction failed, retrying download..."; rm -f "$SDK_FILE"; wget -q --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 --tries=$tries -O "$SDK_FILE" "$INDEX_URL/$SDK_FILE"; extract_sdk "$SDK_FILE"; }
+          extract_sdk "$SDK_FILE" || { 
+            echo "Extraction failed, retrying download for same release..."
+            rm -f "$SDK_FILE"
+            wget -nv --retry-connrefused --waitretry=2 --read-timeout=30 --timeout=20 --tries=$tries -O "$SDK_FILE" "$INDEX_URL/$SDK_FILE" || curl -fL --retry $tries --retry-delay 2 -o "$SDK_FILE" "$INDEX_URL/$SDK_FILE"
+            [ -s "$SDK_FILE" ] || { echo "Redownload failed"; exit 4; }
+            extract_sdk "$SDK_FILE"
+          }
           
           # 找到解压后的SDK目录并进入
           SDK_DIR=$(ls -d openwrt-sdk-* | head -n 1)
