@@ -1,7 +1,7 @@
+
 import React, { useState } from 'react';
 import { Device, Platform, PluginState } from './types';
 import { INITIAL_DEVICES, INITIAL_PLATFORMS } from './constants';
-import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import DeviceList from './components/DeviceList';
 import PlatformManager from './components/PlatformManager';
@@ -75,48 +75,77 @@ const App: React.FC = () => {
     }));
   };
 
+  const navItems = [
+    { id: 'dashboard', label: '运行概览', icon: 'fa-chart-pie' },
+    { id: 'devices', label: '受控设备', icon: 'fa-laptop' },
+    { id: 'platforms', label: '限制规则', icon: 'fa-shield-halved' },
+  ];
+
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+    <div className="min-h-screen bg-[#f4f7f9] flex flex-col">
+      <Header 
+        pluginEnabled={pluginState.enabled} 
+        togglePlugin={togglePlugin} 
+        ipv6Support={pluginState.ipv6Support}
+      />
       
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Header 
-          pluginEnabled={pluginState.enabled} 
-          togglePlugin={togglePlugin} 
-          ipv6Support={pluginState.ipv6Support}
-        />
-        
-        <main className="flex-1 overflow-y-auto p-4 md:p-8">
-          <div className="max-w-6xl mx-auto space-y-6">
-            {activeTab === 'dashboard' && (
-              <Dashboard 
-                devices={pluginState.devices} 
-                logs={pluginState.systemLogs}
-                platforms={pluginState.platforms}
-              />
-            )}
-            
-            {activeTab === 'devices' && (
-              <DeviceList 
-                devices={pluginState.devices} 
-                onUpdate={updateDevice}
-                onAdd={addDevice}
-                onDelete={deleteDevice}
-              />
-            )}
-            
-            {activeTab === 'platforms' && (
-              <PlatformManager 
-                platforms={pluginState.platforms} 
-                onToggle={togglePlatform}
-                onAdd={addPlatform}
-                onUpdate={updatePlatform}
-                onDelete={deletePlatform}
-              />
-            )}
-          </div>
-        </main>
+      {/* Top Navigation Tabs */}
+      <div className="bg-white border-b border-slate-200 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 md:px-8">
+          <nav className="flex -mb-px space-x-8 overflow-x-auto no-scrollbar">
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id as any)}
+                className={`
+                  whitespace-nowrap py-4 px-1 border-b-2 font-bold text-sm transition-all flex items-center gap-2
+                  ${activeTab === item.id 
+                    ? 'border-blue-600 text-blue-600' 
+                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}
+                `}
+              >
+                <i className={`fa-solid ${item.icon} text-[14px]`}></i>
+                {item.label}
+              </button>
+            ))}
+          </nav>
+        </div>
       </div>
+      
+      <main className="flex-1 p-4 md:p-8">
+        <div className="max-w-7xl mx-auto">
+          {activeTab === 'dashboard' && (
+            <Dashboard 
+              devices={pluginState.devices} 
+              logs={pluginState.systemLogs}
+              platforms={pluginState.platforms}
+            />
+          )}
+          
+          {activeTab === 'devices' && (
+            <DeviceList 
+              devices={pluginState.devices} 
+              onUpdate={updateDevice}
+              onAdd={addDevice}
+              onDelete={deleteDevice}
+            />
+          )}
+          
+          {activeTab === 'platforms' && (
+            <PlatformManager 
+              platforms={pluginState.platforms} 
+              onToggle={togglePlatform}
+              onAdd={addPlatform}
+              onUpdate={updatePlatform}
+              onDelete={deletePlatform}
+            />
+          )}
+        </div>
+      </main>
+
+      <footer className="py-6 border-t border-slate-200 text-center text-slate-400 text-xs">
+        <p>熊孩子/mybaby Control Center &copy; 2024 - 基于 OpenWrt nftables 的家长控制系统</p>
+      </footer>
     </div>
   );
 };

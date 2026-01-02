@@ -15,15 +15,12 @@ load_device() {
     config_get_bool enabled "$section" "enabled" '0'
     
     if [ -n "$mac" ] && [ "$enabled" -eq 1 ]; then
-        # Add to blocked list without timeout (permanent block until removed)
-        # Or implement timeout logic if needed based on 'limit'
-        "$PROG" add "$mac"
+        [ -x "$PROG" ] && "$PROG" add "$mac"
     fi
 }
 
 start_service() {
-    # Initialize nftables rules
-    "$PROG" start
+    [ -x "$PROG" ] && "$PROG" start
     
     # Load configuration and apply rules
     config_load "tv_limit"
@@ -31,7 +28,7 @@ start_service() {
 }
 
 stop_service() {
-    "$PROG" stop
+    [ -x "$PROG" ] && "$PROG" stop
 }
 
 service_triggers() {
