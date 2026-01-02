@@ -12,10 +12,25 @@ table_exists() {
     nft list tables | grep -q "inet $TABLE"
 }
 
+set_exists() {
+    nft list set inet "$TABLE" "$SET_NAME" >/dev/null 2>&1
+}
+
+chain_exists() {
+    nft list chain inet "$TABLE" "$CHAIN" >/dev/null 2>&1
+}
+
+create_set() {
+    nft add set inet "$TABLE" "$SET_NAME" "{ type ether_addr; flags timeout; timeout 1d; }" >/dev/null 2>&1 && return 0
+    nft add set inet "$TABLE" "$SET_NAME" "{ type ether_addr; flags dynamic,timeout; timeout 1d; }" >/dev/null 2>&1 && return 0
+    nft add set inet "$TABLE" "$SET_NAME" "{ type ether_addr; timeout 1d; }" >/dev/null 2>&1 && return 0
+    nft add set inet "$TABLE" "$SET_NAME" "{ type ether_addr; }"
+}
+
 # Function to create nftables table and sets
 create_table() {
     nft add table inet $TABLE
-    nft add set inet $TABLE $SET_NAME "{ type ether addr; flags dynamic; timeout 1d; }"
+    create_set
     nft add chain inet $TABLE forward "{ type filter hook forward priority 0; }"
     nft add rule inet $TABLE forward "ip daddr != { 192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12 } ether saddr @$SET_NAME drop"
     nft add rule inet $TABLE forward "ip6 daddr != { fc00::/7, fd00::/8 } ether saddr @$SET_NAME drop"
@@ -36,7 +51,7 @@ add_device() {
     fi
     
     if table_exists; then
-        nft add element inet $TABLE $SET_NAME "{ $mac timeout ${timeout}s }"
+        nft add element inet $TABLE $SET_NAME "{ $mac timeout ${timeout}s }" >/dev/null 2>&1 || nft add element inet $TABLE $SET_NAME "{ $mac }"
     else
         echo "Error: Table $TABLE does not exist"
         return 1
@@ -93,7 +108,13 @@ start() {
         create_table
         echo "Created nftables rules for MyBaby"
     else
-        echo "MyBaby nftables rules already exist"
+        if ! set_exists || ! chain_exists; then
+            nft delete table inet "$TABLE" >/dev/null 2>&1
+            create_table
+            echo "Repaired nftables rules for MyBaby"
+        else
+            echo "MyBaby nftables rules already exist"
+        fi
     fi
     
     # Enable and start the init script if needed
